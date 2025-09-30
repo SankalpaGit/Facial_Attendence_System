@@ -41,21 +41,6 @@ ENV/
 env/
 .venv/
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Test & coverage
-.coverage
-htmlcov/
-.tox/
-.nox/
-.pytest_cache/
-.cache/
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
 
 # Node 
 **/node_modules/
