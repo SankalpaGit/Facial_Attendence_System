@@ -14,7 +14,7 @@ const MainLayout: React.FC = () => {
         {/* Navbar */}
         <Navbar />
         {/* Content */}
-        <main className="flex-1 p-6 bg-gray-50 overflow-y-auto">
+        <main className="flex-1 px-6 bg-gray-100 overflow-y-auto">
           <Outlet />
         </main>
       </div>
