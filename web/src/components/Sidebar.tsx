@@ -23,7 +23,7 @@ const Sidebar: React.FC = () => {
       <div>
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold">HR Portal</h1>
+          <h1 className="text-3xl font-bold font-mono">HR Portal</h1>
           <p className="text-sm text-gray-200">Attendance System</p>
         </div>
 
