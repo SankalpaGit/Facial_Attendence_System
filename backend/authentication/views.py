@@ -1,11 +1,12 @@
-
-# Create your views here.
-import random, datetime
+# authentication/views.py
+import random
 from django.utils import timezone
 from rest_framework.response import Response
 from rest_framework import status, views
 from .models import AdminUser
+from .utils.email_service import send_otp_email
 from .serializers import AdminLoginSerializer
+
 
 class AdminLoginView(views.APIView):
     def post(self, request):
@@ -13,17 +14,31 @@ class AdminLoginView(views.APIView):
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data['email']
 
-        # check if admin exists in DB
+        # Check if admin exists in DB
         try:
             admin = AdminUser.objects.get(email=email)
         except AdminUser.DoesNotExist:
-            return Response({"detail": "Email not registered as admin."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Email not registered as admin."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        # generate 6-digit OTP
+        # Generate 6-digit OTP
         otp = f"{random.randint(100000, 999999)}"
         admin.otp = otp
         admin.otp_created_at = timezone.now()
         admin.save()
 
-        # In production: send via email (for now just return for testing)
-        return Response({"message": "OTP sent to admin email", "otp_debug": otp})
+        # Send OTP email
+        try:
+            send_otp_email(email, otp)
+        except Exception as e:
+            return Response(
+                {"detail": f"Failed to send email: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        return Response(
+            {"message": "OTP sent to admin email"},
+            status=status.HTTP_200_OK
+        )
