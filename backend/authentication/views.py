@@ -1,13 +1,15 @@
 # authentication/views.py
 import random
+from datetime import timedelta
 from django.utils import timezone
+
 from rest_framework.response import Response
 from rest_framework import status, views
+from rest_framework_simplejwt.tokens import RefreshToken
+
 from .models import AdminUser
 from .utils.email_service import send_otp_email
-from .serializers import AdminLoginSerializer
-from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import AdminOTPVerifySerializer
+from .serializers import AdminLoginSerializer, AdminOTPVerifySerializer
 
 
 class AdminLoginView(views.APIView):
