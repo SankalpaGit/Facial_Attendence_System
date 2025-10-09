@@ -112,12 +112,13 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# RESR framework DRF setup
+# REST framework DRF setup for authentication
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
 }
+
 
 # Email related setup
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

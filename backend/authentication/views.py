@@ -6,6 +6,8 @@ from rest_framework import status, views
 from .models import AdminUser
 from .utils.email_service import send_otp_email
 from .serializers import AdminLoginSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+from .serializers import AdminOTPVerifySerializer
 
 
 class AdminLoginView(views.APIView):
@@ -42,3 +44,35 @@ class AdminLoginView(views.APIView):
             {"message": "OTP sent to admin email"},
             status=status.HTTP_200_OK
         )
+
+class AdminOTPVerifyView(views.APIView):
+    def post(self, request):
+        serializer = AdminOTPVerifySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+        otp = serializer.validated_data['otp']
+
+        try:
+            admin = AdminUser.objects.get(email=email)
+        except AdminUser.DoesNotExist:
+            return Response({"detail": "Admin not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # check OTP validity
+        if admin.otp != otp:
+            return Response({"detail": "Invalid OTP."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # check expiration (10 minutes)
+        if timezone.now() - admin.otp_created_at > timedelta(minutes=10):
+            return Response({"detail": "OTP expired."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # success — clear OTP
+        admin.otp = None
+        admin.save()
+
+        # generate JWT token
+        refresh = RefreshToken.for_user(admin)
+        return Response({
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+            "message": "OTP verified successfully."
+        })
