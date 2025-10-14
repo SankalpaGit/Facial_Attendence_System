@@ -18,6 +18,7 @@ ALLOWED_HOSTS = []
 
 # Application definition
 INSTALLED_APPS = [
+    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -38,6 +39,10 @@ INSTALLED_APPS = [
 
 # Middlewares defination from here 
 MIDDLEWARE = [
+    # Order for cors is important
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
+
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -95,6 +100,12 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:5173",
+#     "http://127.0.0.1:573",
+# ]
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 
 LANGUAGE_CODE = 'en-us'

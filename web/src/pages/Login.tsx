@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -7,10 +8,21 @@ const Login: React.FC = () => {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState(Array(6).fill(""));
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleEmailVerify = () => {
-    if (email.trim() !== "") {
+  // Step 1: Send OTP
+  const handleEmailVerify = async () => {
+    if (!email.trim()) return;
+    setLoading(true);
+    try {
+      const res = await axios.post("http://127.0.0.1:8000/api/auth/login/", { email });
+      console.log("OTP sent:", res.data);
       setStep("otp");
+    } catch (err: any) {
+      console.error(err.response?.data);
+      alert(err.response?.data?.detail || "Failed to send OTP");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -28,12 +40,24 @@ const Login: React.FC = () => {
     }
   };
 
-  const handleLogin = () => {
+  // Step 2: Verify OTP
+  const handleLogin = async () => {
     const enteredOtp = otp.join("");
-    if (enteredOtp === "123456") {
+    if (enteredOtp.length !== 6) return setError(true);
+    setLoading(true);
+    try {
+      const res = await axios.post("http://127.0.0.1:8000/api/auth/verify-otp/", {
+        email,
+        otp: enteredOtp,
+      });
+
+      console.log("Login success:", res.data);
       navigate("/dashboard");
-    } else {
+    } catch (err: any) {
+      console.error(err.response?.data);
       setError(true);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -46,7 +70,7 @@ const Login: React.FC = () => {
         muted
         className="absolute top-0 left-0 w-full h-full object-cover"
       >
-        <source src="https://videocdn.cdnpk.net/videos/6ed7243a-1450-43d0-a3ff-c2cfcc6427fa/horizontal/previews/clear/large.mp4?token=exp=1759290547~hmac=2f9d828ac4fe5210ccb4aedc61574919862e4f505026c4528604c91147334619" type="video/mp4" />
+        <source src="http://cdn.pixabay.com/video/2017/06/10/9772-221163248_large.mp4" type="video/mp4" />
       </video>
       <div className="absolute top-0 left-0 w-full h-full bg-black/40" />
 
