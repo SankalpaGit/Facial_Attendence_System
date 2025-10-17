@@ -4,7 +4,6 @@ import {
   FaTachometerAlt,
   FaUserPlus,
   FaUsers,
-  FaCog,
   FaSignOutAlt,
 } from "react-icons/fa";
 
@@ -51,17 +50,7 @@ const Sidebar: React.FC = () => {
 
       {/* Bottom Section */}
       <div className="flex flex-col gap-1">
-        <Link
-          to="/settings"
-          className={`flex items-center gap-4 px-4 py-3 rounded-md text-lg font-medium transition-colors duration-200
-            ${
-              location.pathname === "/settings"
-                ? "bg-yellow-500 text-black font-semibold"
-                : "hover:bg-yellow-500 hover:text-black"
-            }`}
-        >
-          <FaCog className="text-xl" /> <span>Settings</span>
-        </Link>
+       
         <Link
           to="/logout"
           className="flex items-center gap-4 px-4 py-3 rounded-md text-lg font-medium hover:bg-red-500 hover:text-white transition-colors duration-200"

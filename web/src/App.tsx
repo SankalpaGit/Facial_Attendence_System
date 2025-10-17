@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import Enroll from "./pages/Enroll";
 import Employee from "./pages/Employee";
 import Details from "./pages/Detail";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -13,12 +14,15 @@ function App() {
         {/* Public login */}
         <Route path="/" element={<Login />} />
 
-        {/* Protected layout */}
+        {/* Content Routes */}
         <Route element={<MainLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/enroll" element={<Enroll />} />
           <Route path="/employee" element={<Employee />} />
           <Route path="/details" element={<Details />} />
+
+          {/* Catch-all 404 route (inside layout) */}
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
     </BrowserRouter>
