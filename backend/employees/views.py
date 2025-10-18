@@ -1,26 +1,16 @@
+# employees/views.py
 from rest_framework import status, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from .serializers import EmployeeCreateSerializer
-from .models import Employee
+from .models import Employee, EmployeeCred
 from face_recognition.services import process_three_profile_videos
 
 class EmployeeRegisterView(APIView):
-    """
-    POST endpoint for admin to create employee + upload 3 profile videos:
-      - front_video
-      - left_video
-      - right_video
-
-    Expects multipart/form-data with fields:
-      full_name, email, contact, department, password
-      and files front_video, left_video, right_video
-    """
-    permission_classes = [permissions.IsAuthenticated]  # require admin JWT/session
+    permission_classes = [permissions.IsAuthenticated]  # admin only
 
     def post(self, request, *args, **kwargs):
-        # First validate and create employee + credentials
         serializer = EmployeeCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         employee = serializer.save()
@@ -30,9 +20,7 @@ class EmployeeRegisterView(APIView):
         left = request.FILES.get('left_video')
         right = request.FILES.get('right_video')
 
-        # Basic validation
         if not any([front, left, right]):
-            # rollback created employee & creds if videos required
             employee.delete()
             return Response({"detail": "At least one profile video (front/left/right) is required."},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -40,16 +28,41 @@ class EmployeeRegisterView(APIView):
         try:
             mean_encoding = process_three_profile_videos(front, left, right)
         except ValueError as ve:
-            # delete created employee on failure to keep DB clean
             employee.delete()
             return Response({"detail": str(ve)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             employee.delete()
-            return Response({"detail": f"Failed processing videos: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"detail": f"Failed processing videos: {str(e)}"},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Save encoding into employee record
         employee.face_encoding = mean_encoding
         employee.save()
 
-        return Response({"message": "Employee created and face data saved successfully.",
-                         "employee_id": employee.id}, status=status.HTTP_201_CREATED)
+        return Response({
+            "message": "Employee created successfully with face data and credentials.",
+            "employee_id": employee.id
+        }, status=status.HTTP_201_CREATED)
+
+
+class EmployeeCredentialsView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+
+        if not email or not password:
+            return Response({'error': 'Email and password required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            employee = Employee.objects.get(email=email)
+        except Employee.DoesNotExist:
+            return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Prevent duplicate account creation
+        if hasattr(employee, 'credentials'):
+            return Response({'error': 'Account already exists'}, status=status.HTTP_400_BAD_REQUEST)
+
+        cred = EmployeeCred(employee=employee)
+        cred.set_password(password)
+        cred.save()
+
+        return Response({'message': f'Account created successfully for {email}'}, status=status.HTTP_201_CREATED)
