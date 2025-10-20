@@ -2,11 +2,13 @@
 from rest_framework import status, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 
+from django.contrib.auth.hashers import check_password
 from .serializers import EmployeeCreateSerializer
 from .models import Employee, EmployeeCred
 from face_recognition.services import process_three_profile_videos
-
+  
 class EmployeeRegisterView(APIView):
     permission_classes = [permissions.IsAuthenticated]  # admin only
 
@@ -66,3 +68,40 @@ class EmployeeCredentialsView(APIView):
         cred.save()
 
         return Response({'message': f'Account created successfully for {email}'}, status=status.HTTP_201_CREATED)
+
+class EmployeeLoginView(APIView):
+
+    def post(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+
+        if not email or not password:
+            return Response({'error': 'Email and password are required.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            employee = Employee.objects.get(email=email)
+        except Employee.DoesNotExist:
+            return Response({'error': 'Employee not found.'},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            cred = employee.credentials
+        except EmployeeCred.DoesNotExist:
+            return Response({'error': 'No account found for this employee.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        if not check_password(password, cred.password):
+            return Response({'error': 'Invalid password.'},
+                            status=status.HTTP_401_UNAUTHORIZED)
+
+        # Generate JWT token
+        refresh = RefreshToken.for_user(employee)
+
+        return Response({
+            'message': 'Login successful',
+            'token': {
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }
+        }, status=status.HTTP_200_OK)
